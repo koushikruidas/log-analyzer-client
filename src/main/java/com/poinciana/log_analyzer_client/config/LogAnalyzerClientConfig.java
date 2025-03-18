@@ -1,5 +1,6 @@
 package com.poinciana.log_analyzer_client.config;
 
+import com.poinciana.log_analyzer_client.model.ApiKeyResponseDTO;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +83,7 @@ public class LogAnalyzerClientConfig {
             this.appName = getXmlProperty(doc, "application.name");
             this.orgName = getXmlProperty(doc, "organization.name");
             this.apiKey = getXmlProperty(doc, "apiKey");
-            this.kafkaTopic = getXmlProperty(doc, "default.kafka.topic");
+            this.kafkaTopic = getXmlProperty(doc, "kafka.topic");
             log.info("XML Config Loaded: app={}, org={}, topic={}", appName, orgName, kafkaTopic);
         } catch (Exception e) {
             log.error("Failed to parse XML configuration!", e);
@@ -108,16 +109,35 @@ public class LogAnalyzerClientConfig {
                     .queryParam("orgName", orgName);
 
             URI apiUri = builder.build().toUri();
-            ResponseEntity<String> response = restTemplate.getForEntity(apiUri, String.class);
+            ResponseEntity<ApiKeyResponseDTO> response =
+                    restTemplate.getForEntity(apiUri, ApiKeyResponseDTO.class);
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new IllegalStateException("🚨 Invalid API Key! Cannot start the application.");
+                throw new IllegalStateException("Invalid API Key! Cannot start the application.");
             }
+
+            assertApiKeyResponseMatches(response);
 
             log.info("API Key is valid for app: {}", appName);
         } catch (Exception e) {
             log.error("API Key validation failed! Shutting down application.", e);
             System.exit(1);    // Forcefully stop the application
+        }
+    }
+
+    private void assertApiKeyResponseMatches(ResponseEntity<ApiKeyResponseDTO> response) {
+        ApiKeyResponseDTO responseBody = response.getBody();
+        if (!apiKey.equals(responseBody.getApiKey())) {
+            throw new IllegalStateException("API Key validation failed! ApiKey mismatch.");
+        }
+        if (!appName.equals(responseBody.getApplicationName())) {
+            throw new IllegalStateException("API Key validation failed! Application Name mismatch.");
+        }
+        if (!orgName.equals(responseBody.getOrganizationName())) {
+            throw new IllegalStateException("API Key validation failed! Organization Name mismatch.");
+        }
+        if (!kafkaTopic.equals(responseBody.getKafkaTopic())) {
+            throw new IllegalStateException("API Key validation failed! Kafka Topic mismatch.");
         }
     }
 }
