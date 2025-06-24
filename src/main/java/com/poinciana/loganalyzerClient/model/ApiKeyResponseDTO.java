@@ -1,4 +1,4 @@
-package com.poinciana.log_analyzer_client.model;
+package com.poinciana.loganalyzerClient.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

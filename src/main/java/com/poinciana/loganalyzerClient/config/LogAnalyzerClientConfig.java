@@ -1,6 +1,6 @@
-package com.poinciana.log_analyzer_client.config;
+package com.poinciana.loganalyzerClient.config;
 
-import com.poinciana.log_analyzer_client.model.ApiKeyResponseDTO;
+import com.poinciana.loganalyzerClient.model.ApiKeyResponseDTO;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -66,10 +66,11 @@ public class LogAnalyzerClientConfig {
         Properties props = new Properties();
         props.load(file.toURI().toURL().openStream());
 
-        this.appName = props.getProperty("appName");
-        this.orgName = props.getProperty("orgName");
+        this.logAnalyzerUrl = props.getProperty("log.analyzer.api.url");
+        this.appName = props.getProperty("application.name");
+        this.orgName = props.getProperty("organization.name");
         this.apiKey = props.getProperty("apiKey");
-        this.kafkaTopic = props.getProperty("topic");
+        this.kafkaTopic = props.getProperty("kafka.topic");
     }
 
     private void loadFromXmlConfig(File file) {
