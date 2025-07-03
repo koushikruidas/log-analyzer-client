@@ -4,6 +4,9 @@ import com.poinciana.loganalyzerClient.model.ApiKeyResponseDTO;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -75,16 +78,12 @@ public class LogAnalyzerClientConfig {
 
     private void loadFromXmlConfig(File file) {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(file);
-            doc.getDocumentElement().normalize();
-
-            this.logAnalyzerUrl = getXmlProperty(doc, "log.analyzer.api.url");
-            this.appName = getXmlProperty(doc, "application.name");
-            this.orgName = getXmlProperty(doc, "organization.name");
-            this.apiKey = getXmlProperty(doc, "apiKey");
-            this.kafkaTopic = getXmlProperty(doc, "kafka.topic");
+            Configuration cfg = ((LoggerContext) LogManager.getContext(false)).getConfiguration();
+            this.kafkaTopic   = cfg.getStrSubstitutor().replace("${kafka.topic}");
+            this.logAnalyzerUrl  = cfg.getStrSubstitutor().replace("${log.analyzer.api.url}");
+            this.appName      = cfg.getStrSubstitutor().replace("${application.name}");
+            this.orgName      = cfg.getStrSubstitutor().replace("${organization.name}");
+            this.apiKey       = cfg.getStrSubstitutor().replace("${apiKey}");
             log.info("XML Config Loaded: app={}, org={}, topic={}", appName, orgName, kafkaTopic);
         } catch (Exception e) {
             log.error("Failed to parse XML configuration!", e);
