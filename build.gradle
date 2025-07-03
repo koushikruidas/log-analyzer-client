@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.poinciana'
-version = '0.0.4-SNAPSHOT'
+version = '0.0.9-SNAPSHOT'
 
 java {
 	toolchain {

@@ -16,10 +16,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
 
@@ -33,9 +32,7 @@ public class LogAnalyzerClientConfig {
     @Value("${log.analyzer.config.path}")
     private String logConfigPath;
 
-    @Value("${log.analyzer.service.url}")
-    private String logAnalyzerUrl;
-
+    private String logAnalyzerAdminUrl;
     private String appName;
     private String orgName;
     private String apiKey;
@@ -46,8 +43,15 @@ public class LogAnalyzerClientConfig {
         try {
             File logConfigFile = new File(logConfigPath);
             if (!logConfigFile.exists()) {
-                log.warn("Log config file not found at: {}. Skipping.", logConfigPath);
-                return;
+                String[] split = logConfigPath.split("/");
+                log.info("Name of the xml file: {}", split[split.length - 1]);
+                // Try loading from classpath
+                try (InputStream stream = getClass().getClassLoader().getResourceAsStream(split[split.length - 1])) {
+                    if (stream == null) {
+                        log.warn("Log config not found at file path or classpath: {}", logConfigPath);
+                        return;
+                    }
+                }
             }
 
             if (logConfigPath.endsWith(".properties")) {
@@ -69,7 +73,7 @@ public class LogAnalyzerClientConfig {
         Properties props = new Properties();
         props.load(file.toURI().toURL().openStream());
 
-        this.logAnalyzerUrl = props.getProperty("log.analyzer.api.url");
+        this.logAnalyzerAdminUrl = props.getProperty("log.analyzer.admin.api.url");
         this.appName = props.getProperty("application.name");
         this.orgName = props.getProperty("organization.name");
         this.apiKey = props.getProperty("apiKey");
@@ -80,7 +84,7 @@ public class LogAnalyzerClientConfig {
         try {
             Configuration cfg = ((LoggerContext) LogManager.getContext(false)).getConfiguration();
             this.kafkaTopic   = cfg.getStrSubstitutor().replace("${kafka.topic}");
-            this.logAnalyzerUrl  = cfg.getStrSubstitutor().replace("${log.analyzer.api.url}");
+            this.logAnalyzerAdminUrl = cfg.getStrSubstitutor().replace("${log.analyzer.admin.api.url}");
             this.appName      = cfg.getStrSubstitutor().replace("${application.name}");
             this.orgName      = cfg.getStrSubstitutor().replace("${organization.name}");
             this.apiKey       = cfg.getStrSubstitutor().replace("${apiKey}");
@@ -103,7 +107,7 @@ public class LogAnalyzerClientConfig {
 
     private void validateApiKey() {
         try {
-            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(logAnalyzerUrl)
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(logAnalyzerAdminUrl)
                     .queryParam("apiKey", apiKey)
                     .queryParam("appName", appName)
                     .queryParam("orgName", orgName);
