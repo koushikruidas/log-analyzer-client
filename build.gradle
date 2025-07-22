@@ -2,15 +2,19 @@ plugins {
 	id 'java'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'maven-publish'
+	id 'signing'
 }
 
-group = 'com.poinciana'
-version = '0.0.9-SNAPSHOT'
+group = 'io.github.koushikruidas'
+//artifactId = "log-analyzer-client"
+version = '1.0.0'
 
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(17)
 	}
+	withJavadocJar()
+	withSourcesJar()
 }
 
 repositories {
@@ -34,9 +38,35 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) { publication ->
 			from components.java // Explicit type inference
+
+			pom {
+				name = 'Log Analyzer Client'
+				description = 'A client library for analyzing logs'
+				url = 'https://github.com/koushikruidas/log-analyzer-client'
+
+				licenses {
+					license {
+						name = 'The Apache License, Version 2.0'
+						url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+					}
+				}
+
+				developers {
+					developer {
+						id = 'koushikruidas'
+						name = 'Koushik Ruidas'
+						email = 'koushikruidas@gmail.com'
+					}
+				}
+				scm {
+					connection = 'scm:git:git://github.com/koushikruidas/log-analyzer-client.git'
+					developerConnection = 'scm:git:ssh://github.com/koushikruidas/log-analyzer-client.git'
+					url = 'https://github.com/koushikruidas/log-analyzer-client'
+				}
+			}
 		}
 	}
-	repositories {
+	/*repositories {
 		maven {
 			url = uri("${rootProject.projectDir}/local-repo") // Corrected path
 		}
@@ -49,5 +79,20 @@ publishing {
                 password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
             }
         }
+	}*/
+	repositories {
+		maven {
+			name = "OSSRH"
+			url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+			credentials {
+				username = project.findProperty("ossrhUsername")
+				password = project.findProperty("ossrhPassword")
+			}
+		}
 	}
+}
+
+signing {
+	useGpgCmd() // OR useInMemoryPgpKeys(keyId, key, pass) if you prefer Gradle-style in-memory keys
+	sign publishing.publications.mavenJava
 }
