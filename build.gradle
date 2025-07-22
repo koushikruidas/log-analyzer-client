@@ -66,27 +66,30 @@ publishing {
 			}
 		}
 	}
-	/*repositories {
-		maven {
-			url = uri("${rootProject.projectDir}/local-repo") // Corrected path
-		}
-		// For GitHub Packages (optional, requires auth)
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/koushikruidas/log-analyzer-client")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-            }
-        }
-	}*/
+	/**
+	 * To publish to Maven Central (default): ./gradlew publish
+	 * To publish to GitHub Packages: ./gradlew publish -PtargetRepo=github -Pgpr.user=<your-github-username> -Pgpr.key=<your-github-token>
+	 * if you added gpr.user and gpr.key properties in gradle.properties file, you can skip passing them in command line.
+	 * and only run: ./gradlew publish -PtargetRepo=github
+	 * */
 	repositories {
-		maven {
-			name = "OSSRH"
-			url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-			credentials {
-				username = project.findProperty("ossrhUsername")
-				password = project.findProperty("ossrhPassword")
+		if (project.hasProperty("targetRepo") && project.targetRepo == "github") {
+			maven {
+				name = "GitHubPackages"
+				url = uri("https://maven.pkg.github.com/koushikruidas/log-analyzer-client")
+				credentials {
+					username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+					password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+				}
+			}
+		} else {
+			maven {
+				name = "OSSRH"
+				url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+				credentials {
+					username = project.findProperty("ossrhUsername")
+					password = project.findProperty("ossrhPassword")
+				}
 			}
 		}
 	}
